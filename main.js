@@ -63,7 +63,7 @@ $('join').onclick = joinRoom;
 function backToMenu(msg) {
   const c = conn, p = peer;
   conn = peer = null; sim = snap = null; isHost = false; ready = false;
-  names = ['', '']; lastOv = '';
+  names = ['', '']; lastOv = ''; stack = [];
   try { c && c.close(); } catch (e) {}
   try { p && p.destroy(); } catch (e) {}
   show('menu'); validate();
@@ -150,7 +150,10 @@ function onData(m) {
       const text = String(m.text).slice(0, 120);
       addMsg(names[1], text); send({ t: 'chat', from: names[1], text });
     }
-    else if (m.t === 'dir' && sim) sim.pl[1].dir = m.d;
+    else if (m.t === 'dir' && sim) {
+      sim.pl[1].dir = m.d;
+      if (m.tap && m.d) sim.pl[1].next = m.d;     // kısa basışı kaybetme
+    }
   } else {
     if (m.t === 'room') {
       names = m.names; ready = m.ready; secs = m.secs;
@@ -242,7 +245,7 @@ function startGame() {
   grid[(ROWS - 2) * COLS + COLS - 2] = 2;
   sim = {
     grid, phase: 'count', startAt: now + COUNTDOWN * 1000, endAt: 0, acc: 0, last: now, step: 0,
-    pl: [{ x: 1, y: 1, dir: null }, { x: COLS - 2, y: ROWS - 2, dir: null }]
+    pl: [{ x: 1, y: 1, dir: null, next: null }, { x: COLS - 2, y: ROWS - 2, dir: null, next: null }]
   };
   snap = null; lastOv = '';
   send({ t: 'start', names });
@@ -259,8 +262,10 @@ function stepSim(now) {
       const order = sim.step % 2 ? [0, 1] : [1, 0];   // öncelik sırayla değişir (adil olsun)
       order.forEach(i => {
         const p = sim.pl[i], o = sim.pl[1 - i];
-        if (!p.dir) return;
-        const nx = p.x + p.dir[0], ny = p.y + p.dir[1];
+        const d = p.next || p.dir;                    // kısa basış varsa önce o uygulanır
+        p.next = null;
+        if (!d) return;
+        const nx = p.x + d[0], ny = p.y + d[1];
         if (nx < 0 || ny < 0 || nx >= COLS || ny >= ROWS) return;
         if (nx === o.x && ny === o.y) return;
         p.x = nx; p.y = ny; sim.grid[ny * COLS + nx] = i + 1;
@@ -373,19 +378,23 @@ function draw() {
 /* ============ 10. KLAVYE ============ */
 function myDir() { return stack.length ? KEYS[stack[stack.length - 1]] : null; }
 
-function pushDir() {
+function pushDir(tap) {
   const d = myDir();
-  if (isHost) { if (sim) sim.pl[0].dir = d; }
-  else send({ t: 'dir', d });
+  if (isHost) {
+    if (sim) { sim.pl[0].dir = d; if (tap && d) sim.pl[0].next = d; }
+  } else send({ t: 'dir', d, tap: !!tap });
 }
 
 addEventListener('keydown', e => {
   if (screen !== 'game' || !KEYS[e.code]) return;
   e.preventDefault();
   if (e.repeat) return;
-  stack = stack.filter(k => k !== e.code); stack.push(e.code); pushDir();
+  stack = stack.filter(k => k !== e.code); stack.push(e.code); pushDir(true);
 });
 addEventListener('keyup', e => {
   if (!KEYS[e.code]) return;
   stack = stack.filter(k => k !== e.code); pushDir();
 });
+/* Pencere odağı gidince basılı sanılan tuşları temizle */
+addEventListener('blur', () => { stack = []; pushDir(); });
+document.addEventListener('visibilitychange', () => { if (document.hidden) { stack = []; pushDir(); } });
