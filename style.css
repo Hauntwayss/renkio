@@ -1,0 +1,72 @@
+/* ===== Genel ===== */
+:root{--bg:#111;--card:#1b1b1b;--line:#2c2c2c;--text:#ececec;--mut:#8b8b8b;--c0:#ff4d6d;--c1:#3ddcff;--blue:#3b6cf0}
+*{box-sizing:border-box;margin:0}
+body{background:var(--bg);color:var(--text);font-family:Inter,system-ui,-apple-system,"Segoe UI",sans-serif;min-height:100vh}
+.hide{display:none!important}
+.screen{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:16px}
+.mut{color:var(--mut);font-size:13px;line-height:1.5}
+
+/* ===== Form elemanları ===== */
+label{font-size:11px;font-weight:700;letter-spacing:1px;color:var(--mut)}
+input{width:100%;background:#141414;border:1px solid var(--line);border-radius:10px;padding:14px;color:var(--text);font-size:14px;outline:none;font-family:inherit}
+input:focus{border-color:var(--blue)}
+button{border:1px solid var(--line);background:#222;color:var(--text);border-radius:10px;padding:14px 18px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;transition:.15s}
+button:hover:not(:disabled){filter:brightness(1.25)}
+button:disabled{opacity:.4;cursor:not-allowed}
+button.primary{background:var(--blue);border-color:var(--blue);color:#fff}
+button.ghost{background:transparent;color:var(--mut)}
+
+/* ===== Ana menü ===== */
+.card{width:100%;max-width:380px;background:var(--card);border:1px solid var(--line);border-radius:20px;padding:32px 24px;display:flex;flex-direction:column;gap:14px}
+h1{text-align:center;font-size:28px;letter-spacing:1px;margin-bottom:6px}
+h1 span{color:var(--c1)}
+.field{position:relative}
+.field small{position:absolute;right:14px;top:50%;transform:translateY(-50%);color:var(--mut);font-size:12px}
+.join{display:flex;gap:10px}
+.join input{text-transform:uppercase;letter-spacing:2px}
+.err{color:#ff6b6b;font-size:13px;min-height:16px;text-align:center}
+
+/* ===== Oda ===== */
+.room{width:100%;max-width:820px;display:grid;grid-template-columns:1fr 1.2fr;gap:16px}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:20px;padding:22px;display:flex;flex-direction:column;gap:12px}
+.head{display:flex;justify-content:space-between;align-items:center}
+.code{font-size:38px;font-weight:800;letter-spacing:8px;font-variant-numeric:tabular-nums}
+.slot{display:flex;align-items:center;gap:10px;background:#141414;border:1px solid var(--line);border-radius:10px;padding:12px 14px;font-size:14px}
+.slot span{flex:1;overflow:hidden;text-overflow:ellipsis}
+.slot.empty{color:var(--mut);border-style:dashed}
+.slot.empty .dot{background:var(--line)}
+.slot em{font-style:normal;font-size:10px;font-weight:700;letter-spacing:1px;color:var(--mut)}
+.slot em.ok{color:#4ade80}
+.slot .kick{padding:6px 12px;font-size:12px;color:#ff6b6b}
+.seg{display:flex;gap:8px}
+.opt{flex:1;padding:10px 0}
+.opt.on{background:var(--text);color:var(--bg)}
+#action{margin-top:4px}
+.chat{min-height:380px}
+#msgs{flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:6px;font-size:14px;padding:4px 2px;max-height:360px;word-break:break-word}
+.msg b{color:var(--c1)}
+.msg.sys{color:var(--mut);font-size:12px;font-style:italic}
+#chatForm{display:flex;gap:8px}
+@media(max-width:700px){.room{grid-template-columns:1fr}.chat{min-height:280px}}
+
+/* ===== Oyun ===== */
+#game{gap:10px;justify-content:flex-start;padding-top:18px}
+.hud{width:100%;max-width:760px;display:flex;align-items:center;justify-content:space-between;gap:10px}
+.pl{display:flex;align-items:center;gap:10px;flex:1;font-size:15px}
+.pl.r{justify-content:flex-end}
+.pl b{font-size:24px;font-variant-numeric:tabular-nums}
+.dot{width:14px;height:14px;border-radius:4px;flex-shrink:0}
+.c0{background:var(--c0)}.c1{background:var(--c1)}
+#time{font-size:34px;font-weight:800;font-variant-numeric:tabular-nums;min-width:70px;text-align:center}
+.bar{width:100%;max-width:760px;height:8px;border-radius:6px;background:var(--c1);overflow:hidden}
+.bar i{display:block;height:100%;width:50%;background:var(--c0);transition:width .15s}
+#wrap{position:relative}
+canvas{display:block;border-radius:14px;box-shadow:0 20px 60px #000a}
+#ov{position:absolute;inset:0;border-radius:14px;background:#111c;backdrop-filter:blur(4px);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;text-align:center}
+#ov h2{font-size:56px}
+#ov button{min-width:170px}
+.hint{margin-top:4px}
+
+/* ===== Bildirim ===== */
+#toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#222;border:1px solid var(--line);padding:12px 18px;border-radius:10px;font-size:14px;opacity:0;pointer-events:none;transition:.25s}
+#toast.on{opacity:1}

@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>RENK.IO</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<!-- ANA MENÜ -->
+<section id="menu" class="screen">
+  <div class="card">
+    <h1>RENK<span>.IO</span></h1>
+    <label>OYUNCU ADI</label>
+    <div class="field">
+      <input id="name" maxlength="10" placeholder="Adınızı girin..." autocomplete="off">
+      <small id="count">0/10</small>
+    </div>
+    <button id="create" class="primary" disabled>Oda Kur</button>
+    <div class="join">
+      <input id="code" maxlength="4" placeholder="Oda Kodu" autocomplete="off">
+      <button id="join" disabled>Katıl</button>
+    </div>
+    <p id="err" class="err"></p>
+  </div>
+</section>
+
+<!-- ODA -->
+<section id="room" class="screen hide">
+  <div class="room">
+    <div class="panel">
+      <div class="head">
+        <div><label>ODA KODU</label><div id="roomCode" class="code">----</div></div>
+        <button id="copy">Kopyala</button>
+      </div>
+      <label>OYUNCULAR</label>
+      <div id="players"></div>
+      <label>SÜRE</label>
+      <div class="seg" id="dur">
+        <button class="opt" data-v="30">30sn</button>
+        <button class="opt" data-v="60">60sn</button>
+        <button class="opt" data-v="90">90sn</button>
+      </div>
+      <button id="action" class="primary">Oyunu Başlat</button>
+      <button id="leave" class="ghost">Odadan Çık</button>
+    </div>
+    <div class="panel chat">
+      <label>SOHBET</label>
+      <div id="msgs"></div>
+      <form id="chatForm" autocomplete="off">
+        <input id="chatIn" maxlength="120" placeholder="Mesaj yaz...">
+        <button>Gönder</button>
+      </form>
+    </div>
+  </div>
+</section>
+
+<!-- OYUN -->
+<section id="game" class="screen hide">
+  <div class="hud">
+    <div class="pl"><i class="dot c0"></i><span id="n0"></span><b id="s0">0</b></div>
+    <div id="time">60</div>
+    <div class="pl r"><b id="s1">0</b><span id="n1"></span><i class="dot c1"></i></div>
+  </div>
+  <div class="bar"><i id="bar"></i></div>
+  <div id="wrap">
+    <canvas id="cv"></canvas>
+    <div id="ov" class="hide"></div>
+  </div>
+  <p class="mut hint">WASD veya ok tuşları</p>
+</section>
+
+<div id="toast"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/peerjs@1.5.4/dist/peerjs.min.js"></script>
+<script src="main.js"></script>
+</body>
+</html>
