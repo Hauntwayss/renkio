@@ -6,6 +6,16 @@ const KEYS = {
   KeyW: [0, -1], ArrowUp: [0, -1], KeyS: [0, 1], ArrowDown: [0, 1],
   KeyA: [-1, 0], ArrowLeft: [-1, 0], KeyD: [1, 0], ArrowRight: [1, 0]
 };
+const PEER_OPTS = {
+  config: {
+    iceServers: [
+      { urls: 'stun:stun.l.google.com:19302' },
+      { urls: 'stun:stun1.l.google.com:19302' },
+      { urls: 'turn:openrelay.metered.ca:80', username: 'openrelayproject', credential: 'openrelayproject' },
+      { urls: 'turn:openrelay.metered.ca:443?transport=tcp', username: 'openrelayproject', credential: 'openrelayproject' }
+    ]
+  }
+};
 
 /* ============ 2. DURUM ============ */
 let peer = null, conn = null, isHost = false, screen = 'menu';
@@ -63,7 +73,7 @@ function createRoom() {
   setErr('');
   const code = genCode();
   names = [$('name').value.trim(), '']; ready = false;
-  peer = new Peer(PREFIX + code);
+  peer = new Peer(PREFIX + code, PEER_OPTS);
   peer.on('open', () => {
     isHost = true;
     $('roomCode').textContent = code;
@@ -89,7 +99,7 @@ function joinRoom() {
   const code = $('code').value.trim().toUpperCase();
   names = ['', $('name').value.trim()]; ready = false;
   $('join').disabled = true;
-  peer = new Peer();
+  peer = new Peer(undefined, PEER_OPTS);
   peer.on('open', () => {
     conn = peer.connect(PREFIX + code, { reliable: true });
     bind(conn);
@@ -99,8 +109,10 @@ function joinRoom() {
       conn.send({ t: 'hello', name: names[1] });
     });
     setTimeout(() => {
-      if (conn && !conn.open && screen === 'menu') { backToMenu(); setErr('Oda bulunamadı.'); }
-    }, 8000);
+      if (conn && !conn.open && screen === 'menu') {
+        backToMenu(); setErr('Bağlantı kurulamadı. Tekrar dene ya da başka ağdan dene.');
+      }
+    }, 15000);
   });
   peer.on('error', e => {
     const m = e.type === 'peer-unavailable' ? 'Oda bulunamadı.' : 'Bağlantı hatası.';
@@ -261,6 +273,15 @@ function stepSim(now) {
   };
 }
 
+/* Host zamanlayıcısı: sekme arkada olsa da oyun donmasın */
+const ticker = new Worker(URL.createObjectURL(new Blob(['setInterval(()=>postMessage(0),30)'])));
+ticker.onmessage = () => {
+  if (!isHost || !sim) return;
+  const now = performance.now();
+  snap = stepSim(now);
+  if (now - sendT > 45) { send(snap); sendT = now; }
+};
+
 /* ============ 9. OYUN EKRANI & ÇİZİM ============ */
 function enterGame() {
   stack = [];
@@ -279,13 +300,9 @@ function resize() {
 }
 addEventListener('resize', () => screen === 'game' && resize());
 
-function loop(now) {
+function loop() {
   if (!peer) { loopOn = false; return; }
   requestAnimationFrame(loop);
-  if (isHost && sim) {
-    snap = stepSim(now);
-    if (now - sendT > 45) { send(snap); sendT = now; }
-  }
   if (screen === 'game' && snap) { updateHUD(); draw(); updateOverlay(); }
 }
 
