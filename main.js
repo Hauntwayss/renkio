@@ -1,5 +1,6 @@
 /* ============ 1. SABİTLER ============ */
 const COLS = 16, ROWS = 12, STEP = 110, COUNTDOWN = 3;
+const DASH_CD = 15000, DASH_LEN = 4;                   // dash: 15 sn bekleme, 4 kare
 const COLORS = ['#ff4d6d', '#3ddcff'], EMPTY = '#232323';
 const PREFIX = 'renkio-', CHARS = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
 const KEYS = {
@@ -47,6 +48,89 @@ function genCode() {
   for (let i = 0; i < 4; i++) c += CHARS[Math.floor(Math.random() * CHARS.length)];
   return c;
 }
+
+/* ============ 3B. SES EFEKTLERİ (dosya yok, tarayıcıda üretiliyor) ============ */
+const SFX = (() => {
+  let ac = null, muted = false;
+  try { muted = localStorage.getItem('renkio-mute') === '1'; } catch (e) {}
+
+  function audio() {
+    if (!ac) { try { ac = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) {} }
+    if (ac && ac.state === 'suspended') ac.resume();
+    return ac;
+  }
+  function tone(freq, dur, type = 'sine', vol = 0.12, delay = 0, slide = 0) {
+    if (muted) return;
+    const a = audio(); if (!a) return;
+    const t = a.currentTime + delay, o = a.createOscillator(), g = a.createGain();
+    o.type = type;
+    o.frequency.setValueAtTime(freq, t);
+    if (slide) o.frequency.exponentialRampToValueAtTime(freq * slide, t + dur);
+    g.gain.setValueAtTime(vol, t);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    o.connect(g); g.connect(a.destination);
+    o.start(t); o.stop(t + dur + 0.02);
+  }
+  return {
+    unlock: audio,
+    get muted() { return muted; },
+    toggle() {
+      muted = !muted;
+      try { localStorage.setItem('renkio-mute', muted ? '1' : '0'); } catch (e) {}
+      return muted;
+    },
+    click()  { tone(620, 0.05, 'sine', 0.08); tone(820, 0.05, 'sine', 0.06, 0.03); },
+    paint()  { tone(520, 0.07, 'triangle', 0.09, 0, 1.5); },
+    steal()  { tone(320, 0.12, 'sawtooth', 0.06, 0, 2); tone(640, 0.09, 'square', 0.05, 0.05); },
+    dash(v = 0.1) { tone(260, 0.2, 'sawtooth', v, 0, 4); tone(900, 0.12, 'triangle', v * 0.6, 0.05, 0.5); },
+    dashReady() { tone(980, 0.06, 'sine', 0.08); tone(1320, 0.1, 'sine', 0.08, 0.06); },
+    count()  { tone(440, 0.12, 'sine', 0.14); },
+    go()     { tone(660, 0.14, 'square', 0.08); tone(990, 0.26, 'square', 0.08, 0.12); },
+    tick()   { tone(880, 0.07, 'square', 0.06); },
+    win()    { [523, 659, 784, 1047].forEach((f, i) => tone(f, 0.22, 'triangle', 0.14, i * 0.12)); },
+    lose()   { [392, 330, 262].forEach((f, i) => tone(f, 0.28, 'triangle', 0.13, i * 0.16)); },
+    draw()   { tone(440, 0.2, 'triangle', 0.12); tone(440, 0.25, 'triangle', 0.12, 0.22); },
+    msg()    { tone(700, 0.08, 'sine', 0.1); tone(900, 0.1, 'sine', 0.1, 0.07); }
+  };
+})();
+
+/* Tarayıcı sesi ancak kullanıcı tıklayınca açar */
+['pointerdown', 'keydown'].forEach(ev => addEventListener(ev, () => SFX.unlock(), { once: true }));
+
+/* Tüm butonlara tıklayınca ses (sonradan eklenen butonlar dahil) */
+document.addEventListener('click', e => {
+  const b = e.target.closest && e.target.closest('button');
+  if (b && !b.disabled) SFX.click();
+});
+
+/* Ses aç/kapat butonu */
+(function () {
+  const st = document.createElement('style');
+  st.textContent = '#mute{position:fixed;right:16px;bottom:16px;width:44px;height:44px;padding:0;border-radius:50%;font-size:18px;z-index:5}';
+  document.head.append(st);
+  const b = document.createElement('button');
+  b.id = 'mute'; b.title = 'Sesi aç/kapat';
+  b.textContent = SFX.muted ? '🔇' : '🔊';
+  b.onclick = () => { b.textContent = SFX.toggle() ? '🔇' : '🔊'; b.blur(); };
+  document.body.append(b);
+})();
+
+/* Dash barı (oyun ekranına JS ile eklenir) */
+(function () {
+  const st = document.createElement('style');
+  st.textContent =
+    '#dash{width:100%;display:flex;align-items:center;gap:12px;font-size:12px;font-weight:700;letter-spacing:1px;color:var(--mut)}' +
+    '#dash .track{flex:1;height:8px;border-radius:6px;background:#242424;overflow:hidden}' +
+    '#dash .track i{display:block;height:100%;width:100%;background:var(--blue)}' +
+    '#dash.rdy{color:#4ade80}#dash.rdy .track i{background:#4ade80}' +
+    '#dashTxt{min-width:110px;text-align:right}';
+  document.head.append(st);
+  const d = document.createElement('div');
+  d.id = 'dash';
+  d.innerHTML = '<span>DASH</span><div class="track"><i id="dashFill"></i></div><span id="dashTxt">SPACE</span>';
+  $('game').insertBefore(d, document.querySelector('.hint'));
+  document.querySelector('.hint').textContent = 'WASD / ok tuşları  ·  SPACE: Dash (4 kare, 15 sn)';
+})();
 
 /* ============ 4. ANA MENÜ ============ */
 function validate() {
@@ -143,6 +227,7 @@ function onData(m) {
       names[1] = String(m.name).slice(0, 10); ready = false;
       addMsg('', names[1] + ' odaya katıldı', true);
       send({ t: 'chat', sys: true, text: 'Odaya katıldın' });
+      SFX.msg();
       syncRoom();
     }
     else if (m.t === 'ready') { ready = !!m.v; syncRoom(); }
@@ -154,6 +239,7 @@ function onData(m) {
       sim.pl[1].dir = m.d;
       if (m.tap && m.d) sim.pl[1].next = m.d;     // kısa basışı kaybetme
     }
+    else if (m.t === 'dash' && sim && sim.phase === 'play') sim.pl[1].dashReq = true;
   } else {
     if (m.t === 'room') {
       names = m.names; ready = m.ready; secs = m.secs;
@@ -226,6 +312,8 @@ function addMsg(from, text, sys) {
   d.append(text);
   $('msgs').append(d);
   $('msgs').scrollTop = 1e9;
+  const myName = isHost ? names[0] : names[1];
+  if (!sys && from !== myName) SFX.msg();             // rakipten mesaj gelince ses
 }
 
 $('chatForm').onsubmit = e => {
@@ -243,19 +331,38 @@ function startGame() {
   const grid = Array(COLS * ROWS).fill(0);
   grid[1 * COLS + 1] = 1;
   grid[(ROWS - 2) * COLS + COLS - 2] = 2;
+  const mkPl = (x, y, last) => ({ x, y, dir: null, next: null, last, dashReq: false, nextDash: 0, dashN: 0 });
   sim = {
     grid, phase: 'count', startAt: now + COUNTDOWN * 1000, endAt: 0, acc: 0, last: now, step: 0,
-    pl: [{ x: 1, y: 1, dir: null, next: null }, { x: COLS - 2, y: ROWS - 2, dir: null, next: null }]
+    pl: [mkPl(1, 1, [1, 0]), mkPl(COLS - 2, ROWS - 2, [-1, 0])]
   };
   snap = null; lastOv = '';
   send({ t: 'start', names });
   enterGame();
 }
 
+/* Dash: baktığın yöne en fazla DASH_LEN kare atılır, geçtiğin kareleri boyar */
+function doDash(i, now) {
+  const p = sim.pl[i], o = sim.pl[1 - i];
+  if (now < p.nextDash) return;
+  const d = p.next || p.dir || p.last;
+  let moved = 0;
+  for (let k = 0; k < DASH_LEN; k++) {
+    const nx = p.x + d[0], ny = p.y + d[1];
+    if (nx < 0 || ny < 0 || nx >= COLS || ny >= ROWS) break;
+    if (nx === o.x && ny === o.y) break;
+    p.x = nx; p.y = ny; sim.grid[ny * COLS + nx] = i + 1; moved++;
+  }
+  if (moved) { p.nextDash = now + DASH_CD; p.dashN++; p.last = d; }
+}
+
 function stepSim(now) {
   if (sim.phase === 'count') {
     if (now >= sim.startAt) { sim.phase = 'play'; sim.last = now; sim.endAt = now + secs * 1000; }
   } else if (sim.phase === 'play') {
+    sim.pl.forEach((p, i) => {                        // dash istekleri anında işlenir
+      if (p.dashReq) { p.dashReq = false; doDash(i, now); }
+    });
     sim.acc += now - sim.last; sim.last = now;
     while (sim.acc >= STEP) {
       sim.acc -= STEP; sim.step++;
@@ -268,7 +375,7 @@ function stepSim(now) {
         const nx = p.x + d[0], ny = p.y + d[1];
         if (nx < 0 || ny < 0 || nx >= COLS || ny >= ROWS) return;
         if (nx === o.x && ny === o.y) return;
-        p.x = nx; p.y = ny; sim.grid[ny * COLS + nx] = i + 1;
+        p.x = nx; p.y = ny; p.last = d; sim.grid[ny * COLS + nx] = i + 1;
       });
     }
     if (now >= sim.endAt) sim.phase = 'over';
@@ -276,7 +383,9 @@ function stepSim(now) {
   return {
     t: 's', g: sim.grid.join(''), p: sim.pl.map(p => [p.x, p.y]), ph: sim.phase,
     time: sim.phase === 'count' ? secs : Math.max(0, Math.ceil((sim.endAt - now) / 1000)),
-    cd: Math.max(1, Math.ceil((sim.startAt - now) / 1000))
+    cd: Math.max(1, Math.ceil((sim.startAt - now) / 1000)),
+    dcd: sim.pl.map(p => Math.max(0, p.nextDash - now)),   // dash bekleme süresi (ms)
+    dn: sim.pl.map(p => p.dashN)                           // dash sayacı (ses için)
   };
 }
 
@@ -290,8 +399,12 @@ ticker.onmessage = () => {
 };
 
 /* ============ 9. OYUN EKRANI & ÇİZİM ============ */
+let sfxPrev = null, sfxPos = null, sfxPh = '', sfxCd = 0, sfxSec = -1, sfxDn = [0, 0], sfxDcd = 0;
+
 function enterGame() {
   stack = [];
+  sfxPrev = sfxPos = null; sfxPh = ''; sfxCd = 0; sfxSec = -1; sfxDn = [0, 0]; sfxDcd = 0;
+  if (document.activeElement) document.activeElement.blur();
   show('game');
   $('n0').textContent = names[0]; $('n1').textContent = names[1];
   $('ov').classList.add('hide');
@@ -300,17 +413,58 @@ function enterGame() {
 }
 
 function resize() {
-  cell = Math.max(16, Math.floor(Math.min((innerWidth - 32) / COLS, (innerHeight - 170) / ROWS, 56)));
+  cell = Math.max(16, Math.floor(Math.min((innerWidth - 32) / COLS, (innerHeight - 200) / ROWS, 56)));
   cv.width = COLS * cell; cv.height = ROWS * cell;
   document.querySelector('.hud').style.maxWidth = cv.width + 'px';
   document.querySelector('.bar').style.maxWidth = cv.width + 'px';
+  $('dash').style.maxWidth = cv.width + 'px';
 }
 addEventListener('resize', () => screen === 'game' && resize());
 
 function loop() {
   if (!peer) { loopOn = false; return; }
   requestAnimationFrame(loop);
-  if (screen === 'game' && snap) { updateHUD(); draw(); updateOverlay(); }
+  if (screen === 'game' && snap) { updateHUD(); gameSfx(); draw(); updateOverlay(); }
+}
+
+/* Oyun seslerini durum değişikliklerinden üretir */
+function gameSfx() {
+  if (snap === sfxPrev) return;
+  const me = isHost ? 0 : 1, pos = snap.p[me];
+
+  if (snap.ph === 'count' && snap.cd !== sfxCd) { SFX.count(); sfxCd = snap.cd; }
+
+  if (snap.ph !== sfxPh) {
+    if (snap.ph === 'play') SFX.go();
+    if (snap.ph === 'over') {
+      const mine = snap.sc[me], other = snap.sc[1 - me];
+      if (mine > other) SFX.win(); else if (mine < other) SFX.lose(); else SFX.draw();
+    }
+    sfxPh = snap.ph;
+  }
+
+  if (snap.ph === 'play') {
+    if (snap.dn) {                                    // dash sesleri
+      if (snap.dn[me] !== sfxDn[me]) SFX.dash(0.1);
+      else if (snap.dn[1 - me] !== sfxDn[1 - me]) SFX.dash(0.04);
+    }
+    else if (sfxPrev && sfxPos && (pos[0] !== sfxPos[0] || pos[1] !== sfxPos[1])) {
+      const before = sfxPrev.g[pos[1] * COLS + pos[0]];
+      if (before === '0') SFX.paint();
+      else if (before !== String(me + 1)) SFX.steal();
+    }
+    if (snap.dn && snap.dn[me] === sfxDn[me] && sfxPrev && sfxPos && (pos[0] !== sfxPos[0] || pos[1] !== sfxPos[1])) {
+      const before = sfxPrev.g[pos[1] * COLS + pos[0]];
+      if (before === '0') SFX.paint();
+      else if (before !== String(me + 1)) SFX.steal();
+    }
+    if (sfxDcd > 0 && snap.dcd[me] <= 0) SFX.dashReady();
+    if (snap.time <= 5 && snap.time > 0 && snap.time !== sfxSec) SFX.tick();
+  }
+  if (snap.dn) sfxDn = snap.dn.slice();
+  sfxDcd = snap.dcd ? snap.dcd[me] : 0;
+  sfxSec = snap.time;
+  sfxPos = pos.slice(); sfxPrev = snap;
 }
 
 function updateHUD() {
@@ -320,6 +474,11 @@ function updateHUD() {
   $('s0').textContent = a; $('s1').textContent = b;
   $('bar').style.width = (a + b ? a / (a + b) * 100 : 50) + '%';
   $('time').textContent = snap.time;
+
+  const rem = snap.dcd ? snap.dcd[isHost ? 0 : 1] : 0;      // dash barı
+  $('dash').classList.toggle('rdy', rem <= 0);
+  $('dashFill').style.width = (100 - rem / DASH_CD * 100) + '%';
+  $('dashTxt').textContent = rem > 0 ? Math.ceil(rem / 1000) + ' sn' : 'HAZIR · SPACE';
 }
 
 function updateOverlay() {
@@ -385,13 +544,21 @@ function pushDir(tap) {
   } else send({ t: 'dir', d, tap: !!tap });
 }
 
+function requestDash() {
+  if (isHost) { if (sim && sim.phase === 'play') sim.pl[0].dashReq = true; }
+  else send({ t: 'dash' });
+}
+
 addEventListener('keydown', e => {
-  if (screen !== 'game' || !KEYS[e.code]) return;
+  if (screen !== 'game') return;
+  if (e.code === 'Space') { e.preventDefault(); if (!e.repeat) requestDash(); return; }
+  if (!KEYS[e.code]) return;
   e.preventDefault();
   if (e.repeat) return;
   stack = stack.filter(k => k !== e.code); stack.push(e.code); pushDir(true);
 });
 addEventListener('keyup', e => {
+  if (screen === 'game' && e.code === 'Space') { e.preventDefault(); return; }
   if (!KEYS[e.code]) return;
   stack = stack.filter(k => k !== e.code); pushDir();
 });
