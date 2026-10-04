@@ -70,3 +70,17 @@ canvas{display:block;border-radius:14px;box-shadow:0 20px 60px #000a}
 /* ===== Bildirim ===== */
 #toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#222;border:1px solid var(--line);padding:12px 18px;border-radius:10px;font-size:14px;opacity:0;pointer-events:none;transition:.25s}
 #toast.on{opacity:1}
+/* ===== Skin, harita, oyun içi sohbet ===== */
+.seg.wrap{flex-wrap:wrap}
+.modal{position:fixed;inset:0;background:#000b;display:flex;align-items:center;justify-content:center;padding:16px;z-index:20;overflow:auto}
+.modal .card{align-items:stretch;max-width:420px}
+.modal canvas{align-self:center;background:#141414;border:1px solid var(--line);border-radius:16px}
+.sw{width:34px;height:34px;padding:0;border-radius:50%;border:2px solid transparent}
+.sw.on{border-color:#fff}
+.seg.wrap .opt{flex:0 0 auto;padding:10px 14px}
+#gchat{position:fixed;left:16px;bottom:16px;width:min(360px,60vw);z-index:4}
+#glog{display:flex;flex-direction:column;gap:4px;margin-bottom:6px}
+.gm{background:#000a;border-radius:8px;padding:6px 10px;font-size:13px;word-break:break-word}
+.gm.sys{color:var(--mut)}
+#gin{background:#000c}
+.modal .card{max-height:94vh;overflow-y:auto}
