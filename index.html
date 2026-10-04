@@ -2,13 +2,12 @@
 <html lang="tr">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
 <title>RENK.IO</title>
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-<!-- ANA MENÜ -->
 <section id="menu" class="screen">
   <div class="card">
     <h1>RENK<span>.IO</span></h1>
@@ -22,11 +21,52 @@
       <input id="code" maxlength="4" placeholder="Oda Kodu" autocomplete="off">
       <button id="join" disabled>Katıl</button>
     </div>
+    <div class="join">
+      <button id="skinBtn" style="flex:1">Skin</button>
+      <button id="helpBtn" class="helpOpen" style="flex:1">Nasıl Oynanır</button>
+    </div>
     <p id="err" class="err"></p>
   </div>
 </section>
 
-<!-- ODA -->
+<div id="skinModal" class="modal hide">
+  <div class="card">
+    <h1>SKİN</h1>
+    <canvas id="skinPrev" width="140" height="140"></canvas>
+    <label>RENK</label><div id="swatches" class="seg wrap"></div>
+    <label>ŞAPKA</label><div id="hats" class="seg wrap"></div>
+    <label>GÖZ</label><div id="eyes" class="seg wrap"></div>
+    <label>DESEN</label><div id="pats" class="seg wrap"></div>
+    <label>BOYA STİLİ</label><div id="tiles" class="seg wrap"></div>
+    <button id="skinSave" class="primary">Kaydet</button>
+  </div>
+</div>
+
+<div id="helpModal" class="modal hide">
+  <div class="card help">
+    <h1>NASIL OYNANIR</h1>
+    <h3>AMAÇ</h3>
+    <p>Süre bitene kadar en çok kareyi boyayan kazanır. Rakibin boyadığı karenin üstünden geçersen o kare senin olur.</p>
+    <h3>KONTROLLER</h3>
+    <p><b>Bilgisayar:</b> WASD veya ok tuşlarıyla yürü, Space ile dash at, Enter ile sohbet et.<br>
+    <b>Telefon:</b> sol alttaki joystick ile yürü, sağdaki DASH ve SOHBET butonlarını kullan.</p>
+    <h3>DASH</h3>
+    <p>Baktığın yöne 4 kare ileri atılır ve geçtiğin kareleri boyar. 15 saniyede bir kullanılır. Duvarda ve rakipte durur. Donmuşken kullanılamaz.</p>
+    <h3>GÜÇ TOPLARI</h3>
+    <p style="color:var(--mut)">Haritada 6 saniyede bir belirir, aynı anda en fazla 3 tane olur. Üstünden geçince alırsın.</p>
+    <div class="pu"><canvas width="40" height="40" data-k="b"></canvas><p><b>Bomba:</b> etrafındaki 3x3 alanı senin renginle boyar.</p></div>
+    <div class="pu"><canvas width="40" height="40" data-k="i"></canvas><p><b>Buz:</b> rakibi 2 saniye dondurur, kıpırdayamaz ve dash atamaz.</p></div>
+    <div class="pu"><canvas width="40" height="40" data-k="s"></canvas><p><b>Hız:</b> 5 saniye boyunca çok daha hızlı yürürsün.</p></div>
+    <h3>HARİTALAR</h3>
+    <p>Klasik (boş alan), Sütunlar (bloklu alan) ve Labirent (dar koridorlar). Duvarların içinden geçilmez, dash ve bomba da duvarı aşmaz. Haritayı ve süreyi odayı kuran seçer.</p>
+    <h3>ODA</h3>
+    <p>Odayı kuran kişi kodu arkadaşına yollar. Arkadaşın Hazır Ol'a basınca oyun başlatılabilir. Aynı odada oynadıkça maç serisi skoru tutulur.</p>
+    <h3>İPUÇLARI</h3>
+    <p>Rakibin arkasından gidip izini ez. Dash'i son saniyelere sakla, hızlı alan kapmak için çok işe yarar. Buzu rakibin dash'i hazırken kullan. Kenarları ve köşeleri ilk başta boyama, ortada sıkışmadan önce çatışmaya gir.</p>
+    <button id="helpClose" class="primary">Anladım</button>
+  </div>
+</div>
+
 <section id="room" class="screen hide">
   <div class="room">
     <div class="panel">
@@ -42,7 +82,14 @@
         <button class="opt" data-v="60">60sn</button>
         <button class="opt" data-v="90">90sn</button>
       </div>
+      <label>HARİTA</label>
+      <div class="seg" id="maps">
+        <button class="opt" data-v="0">Klasik</button>
+        <button class="opt" data-v="1">Sütunlar</button>
+        <button class="opt" data-v="2">Labirent</button>
+      </div>
       <button id="action" class="primary">Oyunu Başlat</button>
+      <button id="helpBtn2" class="ghost helpOpen">Nasıl Oynanır</button>
       <button id="leave" class="ghost">Odadan Çık</button>
     </div>
     <div class="panel chat">
@@ -56,7 +103,6 @@
   </div>
 </section>
 
-<!-- OYUN -->
 <section id="game" class="screen hide">
   <div class="hud">
     <div class="pl"><i class="dot c0"></i><span id="n0"></span><b id="s0">0</b></div>
@@ -68,7 +114,11 @@
     <canvas id="cv"></canvas>
     <div id="ov" class="hide"></div>
   </div>
-  <p class="mut hint">WASD veya ok tuşları</p>
+  <p class="mut hint">WASD / ok tuşları</p>
+  <div id="gchat">
+    <div id="glog"></div>
+    <input id="gin" class="hide" maxlength="120" placeholder="Mesaj yaz, Enter ile gönder" autocomplete="off">
+  </div>
 </section>
 
 <div id="toast"></div>
